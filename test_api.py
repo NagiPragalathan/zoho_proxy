@@ -31,8 +31,10 @@ def test_proxy_lead():
         print(f"📊 Status Code: {response.status_code}")
         
         if response.status_code == 200:
+            res_json = response.json()
             print("✅ Success! Response Data:")
-            print(json.dumps(response.json(), indent=4))
+            print(f"🆔 Created Lead ID: {res_json.get('lead_id')}")
+            print(json.dumps(res_json, indent=4))
         else:
             print("❌ Failed! Error Details:")
             print(response.text)

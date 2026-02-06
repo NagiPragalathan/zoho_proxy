@@ -215,9 +215,21 @@ def proxy_lead(request):
     
     lead_data = {"data": [payload]}
     resp = requests.post(lead_url, headers=headers, json=lead_data)
-    
+    resp_json = resp.json()
+
+    # Extract Lead ID if successful
+    lead_id = None
+    try:
+        if resp.status_code in [200, 201]:
+            data = resp_json.get('data', [])
+            if data and data[0].get('status') == 'success':
+                lead_id = data[0].get('details', {}).get('id')
+    except:
+        pass
+
     return JsonResponse({
+        'lead_id': lead_id,
         'account': account.account_name,
         'status': resp.status_code,
-        'response': resp.json()
+        'response': resp_json
     })
