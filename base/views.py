@@ -139,21 +139,31 @@ def ensure_fields_exist(account, module, data_keys):
     
     existing_fields = {field['api_name'] for field in resp.json().get('fields', [])}
     
+    # List of system fields to never try to create
+    system_base_fields = {'First_Name', 'Last_Name', 'Email', 'Company', 'Phone', 'Mobile', 'Lead_Source', 'Lead_Status', 'Industry', 'Website', 'Description'}
+
     for key in data_keys:
-        if key not in existing_fields and "_" not in key: # Skip system fields or weird ones
+        # Check if it's a new field (not in system fields and not in existing Zoho fields)
+        if key not in existing_fields and key not in system_base_fields:
+            print(f"DEBUG: Field '{key}' not found in Zoho. Attempting to create...")
             # Try to create field
             create_url = f"{account.api_domain}/crm/v2/settings/fields?module={module}"
+            
+            # Prepare API Name: Zoho API names usually don't like multiple underscores or starting with numbers
+            # But we'll try to use what's provided first.
             field_data = {
                 "fields": [
                     {
                         "api_name": key,
                         "display_label": key.replace('_', ' ').title(),
                         "data_type": "text",
+                        "field_label": key.replace('_', ' ').title(), # Some versions use field_label
                         "length": 255
                     }
                 ]
             }
-            requests.post(create_url, headers=headers, json=field_data)
+            create_resp = requests.post(create_url, headers=headers, json=field_data)
+            print(f"DEBUG: Field creation response for '{key}': {create_resp.status_code} - {create_resp.text}")
 
 def set_primary(request, pk):
     account = get_object_or_404(ZohoAccount, pk=pk)
@@ -182,6 +192,7 @@ def proxy_lead(request):
     
     try:
         payload = json.loads(request.body)
+        print(f"DEBUG: Proxy Lead Payload Received: {payload}")
     except:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
 

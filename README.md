@@ -1,6 +1,19 @@
-# Zoho Proxy API Documentation
+# Zoho Proxy API
 
-This proxy allows you to push lead data to multiple connected Zoho CRM accounts simultaneously. It also automatically handles dynamic field creation—if a field in your payload doesn't exist in Zoho, the proxy will create it as a text field before storing the data.
+This proxy allows you to push lead data to your Zoho CRM. It handles OAuth2 authentication, token refreshing, and **dynamic field creation** (if a field in your payload doesn't exist in Zoho, it will be automatically created).
+
+## 🚀 Quick Start
+1. **Install Dependencies**: `pip install requests django`
+2. **Run Server**: `python manage.py runserver`
+3. **Connect Account**: Visit `http://localhost:8000/` and link your Zoho account.
+4. **Test the API**: Run `python test_api.py`
+
+## 🧪 Testing the API
+We have included a `test_api.py` script to verify the connection. 
+```bash
+python test_api.py
+```
+This script sends a sample payload with dynamic fields. You can watch your terminal logs to see the proxy detecting missing fields, creating them in Zoho, and then submitting the lead.
 
 ## 1. Connecting Zoho Accounts
 1. Start the server: `python manage.py runserver`
