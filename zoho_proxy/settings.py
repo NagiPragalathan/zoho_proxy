@@ -129,5 +129,5 @@ ZOHO_CLIENT_SECRET = '879e4d7e0f1c878b2e520c008fc1a74fcff5e7df72'
 ZOHO_REDIRECT_URI = 'http://localhost:8000/api/oauth/zoho/callback/'
 ZOHO_AUTH_URL = 'https://accounts.zoho.com/oauth/v2/auth'
 ZOHO_TOKEN_URL = 'https://accounts.zoho.com/oauth/v2/token'
-# Scopes for CRM leads, metadata, and identity
-ZOHO_SCOPES = 'ZohoCRM.modules.leads.CREATE,ZohoCRM.modules.leads.READ,ZohoCRM.settings.fields.CREATE,ZohoCRM.settings.fields.READ,ZohoCRM.users.READ,ZohoCRM.org.READ'
+# Scopes for CRM leads, metadata, identity, and Bookings
+ZOHO_SCOPES = 'ZohoCRM.modules.leads.CREATE,ZohoCRM.modules.leads.READ,ZohoCRM.settings.fields.CREATE,ZohoCRM.settings.fields.READ,ZohoCRM.users.READ,ZohoCRM.org.READ,zohobookings.data.READ,zohobookings.data.CREATE'

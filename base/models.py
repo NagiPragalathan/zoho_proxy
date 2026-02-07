@@ -2,9 +2,12 @@ from django.db import models
 
 class ZohoAccount(models.Model):
     account_name = models.CharField(max_length=255, default="Main Account")
+    tenant_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
     access_token = models.TextField()
     refresh_token = models.TextField()
     api_domain = models.CharField(max_length=255, default="https://www.zohoapis.com")
+    bookings_service_id = models.CharField(max_length=255, null=True, blank=True)
+    bookings_staff_id = models.CharField(max_length=255, null=True, blank=True)
     expiry_time = models.DateTimeField()
     is_active = models.BooleanField(default=True)
     is_primary = models.BooleanField(default=False)

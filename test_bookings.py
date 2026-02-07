@@ -1,0 +1,50 @@
+import requests
+import json
+from datetime import datetime, timedelta
+
+# Configuration
+API_URL = "http://localhost:8000/api/bookings/"
+
+def test_booking_logic():
+    print("🚀 Starting Zoho Bookings Proxy Test...")
+    
+    # Use today's date for testing
+    test_date = (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%d")
+    
+    payload = {
+        "date": test_date,
+        "time": "14:30",
+        "name": "Integration Tester",
+        "email": "tester@example.com",
+        "phone": "+919876543210"
+        # "tenant_id": "optional_id",
+        # "service_id": "...", 
+        # "staff_id": "..."
+    }
+
+    try:
+        print(f"📡 Attempting to book for {test_date} at 14:30...")
+        response = requests.post(
+            API_URL, 
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}
+        )
+        
+        data = response.json()
+        print(f"📊 Status: {data.get('status')}")
+        
+        if data.get('status') == 'booking done':
+            print(f"✅ Booking Confirmed! ID: {data.get('booking_id')}")
+        elif data.get('status') == 'slot unavailable':
+            print(f"⚠️ Slot taken. Alternatives found for {data.get('date')}:")
+            print(f"🕒 {data.get('available_slots')}")
+        else:
+            print(f"❌ Error: {data.get('message')}")
+            if 'zoho_error' in data:
+                print(f"🔍 Zoho Error: {data['zoho_error']}")
+
+    except Exception as e:
+        print(f"❌ Connection Error: {e}")
+
+if __name__ == "__main__":
+    test_booking_logic()
