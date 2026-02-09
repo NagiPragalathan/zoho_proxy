@@ -125,7 +125,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Zoho Configuration
 ZOHO_CLIENT_ID = '1000.CGNEDBLS2WESK7DJT8PYIRKEGU5NSF'
 ZOHO_CLIENT_SECRET = '879e4d7e0f1c878b2e520c008fc1a74fcff5e7df72'
-ZOHO_REDIRECT_URI = 'http://ec2-3-85-167-62.compute-1.amazonaws.com:8000/api/oauth/zoho/callback/'
+ZOHO_REDIRECT_URI = 'http://127.0.0.1:8000/api/oauth/zoho/callback/'
 ZOHO_AUTH_URL = 'https://accounts.zoho.com/oauth/v2/auth'
 ZOHO_TOKEN_URL = 'https://accounts.zoho.com/oauth/v2/token'
 # Scopes for CRM leads, metadata, identity, and Bookings

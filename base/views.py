@@ -19,8 +19,8 @@ def index(request):
                     headers = {'Authorization': f'Zoho-oauthtoken {token}'}
                     print(f"DEBUG: Fetching identity from Zoho Accounts")
                     
-                    # Use the standard OAuth User Info endpoint
-                    info_resp = requests.get("https://accounts.zoho.com/oauth/user/info", headers=headers)
+                    # Use the regional OAuth User Info endpoint
+                    info_resp = requests.get(f"{account.accounts_server}/oauth/user/info", headers=headers)
                     print(f"DEBUG: Info API Status: {info_resp.status_code}")
                     
                     if info_resp.status_code == 200:
@@ -47,9 +47,12 @@ def zoho_login(request):
 
 def zoho_callback(request):
     code = request.GET.get('code')
+    accounts_server = request.GET.get('accounts-server') or settings.ZOHO_TOKEN_URL.replace('/oauth/v2/token', '')
+    
     if not code:
         return JsonResponse({'error': 'No code provided'}, status=400)
 
+    token_url = f"{accounts_server}/oauth/v2/token"
     data = {
         'code': code,
         'client_id': settings.ZOHO_CLIENT_ID,
@@ -58,13 +61,11 @@ def zoho_callback(request):
         'grant_type': 'authorization_code'
     }
 
-    response = requests.post(settings.ZOHO_TOKEN_URL, data=data)
+    response = requests.post(token_url, data=data)
     res_data = response.json()
 
     if 'access_token' in res_data:
         expiry = timezone.now() + timedelta(seconds=res_data.get('expires_in', 3600))
-        # For simplicity, we create or update a single connection for now, 
-        # or we could use account_id if provided by Zoho.
         # Zoho returns 'api_domain' in the token response.
         api_domain = res_data.get('api_domain', 'https://www.zohoapis.com')
         
@@ -72,8 +73,8 @@ def zoho_callback(request):
         account_display_name = "Zoho Account"
         headers = {'Authorization': f'Zoho-oauthtoken {res_data["access_token"]}'}
         try:
-            # Try the standard Identity endpoint
-            info_resp = requests.get("https://accounts.zoho.com/oauth/user/info", headers=headers)
+            # Try the regional Identity endpoint
+            info_resp = requests.get(f"{accounts_server}/oauth/user/info", headers=headers)
             if info_resp.status_code == 200:
                 info_data = info_resp.json()
                 account_display_name = f"{info_data.get('Display_Name')} ({info_data.get('Email')})"
@@ -97,6 +98,7 @@ def zoho_callback(request):
                 'account_name': account_display_name,
                 'access_token': res_data['access_token'],
                 'api_domain': api_domain,
+                'accounts_server': accounts_server,
                 'expiry_time': expiry,
                 'is_active': True,
                 'is_primary': is_primary
@@ -107,13 +109,14 @@ def zoho_callback(request):
         return JsonResponse(res_data, status=400)
 
 def refresh_zoho_token(account):
+    token_url = f"{account.accounts_server}/oauth/v2/token"
     data = {
         'refresh_token': account.refresh_token,
         'client_id': settings.ZOHO_CLIENT_ID,
         'client_secret': settings.ZOHO_CLIENT_SECRET,
         'grant_type': 'refresh_token'
     }
-    response = requests.post(settings.ZOHO_TOKEN_URL, data=data)
+    response = requests.post(token_url, data=data)
     res_data = response.json()
     if 'access_token' in res_data:
         account.access_token = res_data['access_token']

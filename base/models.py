@@ -6,6 +6,7 @@ class ZohoAccount(models.Model):
     access_token = models.TextField()
     refresh_token = models.TextField()
     api_domain = models.CharField(max_length=255, default="https://www.zohoapis.com")
+    accounts_server = models.CharField(max_length=255, default="https://accounts.zoho.com")
     bookings_service_id = models.CharField(max_length=255, null=True, blank=True)
     bookings_staff_id = models.CharField(max_length=255, null=True, blank=True)
     expiry_time = models.DateTimeField()
