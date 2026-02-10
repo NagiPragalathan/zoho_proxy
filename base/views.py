@@ -273,10 +273,15 @@ def proxy_lead(request):
     except:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
-    # Get the primary account
-    account = ZohoAccount.objects.filter(is_active=True, is_primary=True).first()
+    # Multi-tenant account lookup
+    tenant_id = payload.get('tenant_id')
+    if not tenant_id:
+        account = ZohoAccount.objects.filter(is_active=True, is_primary=True).first()
+    else:
+        account = ZohoAccount.objects.filter(tenant_id=tenant_id, is_active=True).first()
+
     if not account:
-        return JsonResponse({'error': 'No primary Zoho account connected'}, status=400)
+        return JsonResponse({'error': f'Zoho account not found for tenant: {tenant_id or "Primary"}'}, status=400)
 
     # Ensure mandatory Last_Name exists if missing
     if 'Last_Name' not in payload and 'last_name' not in payload:
@@ -285,27 +290,37 @@ def proxy_lead(request):
     # 1. Ensure fields exist
     ensure_fields_exist(account, 'Leads', payload.keys())
     
-    # 2. Push Lead
+    # 2. Push Lead with UPSERT logic (Update if Email exists, else Create)
     token = get_valid_token(account)
     headers = {'Authorization': f'Zoho-oauthtoken {token}'}
-    lead_url = f"{account.api_domain}/crm/v2/Leads"
     
-    lead_data = {"data": [payload]}
-    resp = requests.post(lead_url, headers=headers, json=lead_data)
+    # The 'upsert' version of the Leads API
+    lead_url = f"{account.api_domain}/crm/v2/Leads/upsert"
+    
+    # If the payload contains an email or phone, we use them for duplicate check
+    upsert_data = {
+        "data": [payload],
+        "duplicate_check_fields": ["Email", "Phone"]
+    }
+    
+    resp = requests.post(lead_url, headers=headers, json=upsert_data)
     resp_json = resp.json()
 
     # Extract Lead ID if successful
     lead_id = None
+    action = "created"
     try:
         if resp.status_code in [200, 201]:
             data = resp_json.get('data', [])
             if data and data[0].get('status') == 'success':
                 lead_id = data[0].get('details', {}).get('id')
+                action = data[0].get('action', 'success')
     except:
         pass
 
     return JsonResponse({
         'lead_id': lead_id,
+        'action': action,
         'account': account.account_name,
         'status': resp.status_code,
         'response': resp_json
