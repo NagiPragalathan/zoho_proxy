@@ -632,8 +632,18 @@ def proxy_booking(request):
         "phone_number": customer_phone,
     }
     
+    # Strategy: Send custom fields in ALL known Zoho formats to ensure one sticks.
     if additional_info:
+        # 1. any_additional_info (Standard)
         customer_info["any_additional_info"] = additional_info
+        
+        # 2. custom_fields (Legacy/Alternative)
+        customer_info["custom_fields"] = additional_info
+        
+        # 3. Root Level (Falback)
+        for k, v in additional_info.items():
+            if k not in customer_info:
+                customer_info[k] = v
 
     # 1. Try to book
     token = get_valid_token(account)
@@ -644,11 +654,22 @@ def proxy_booking(request):
     
     from_time = format_datetime_for_zoho(date_obj, time_str)
     
+    
+    # --- PROXY FIX FOR MANDATORY FIELDS (State) ---
+    # Ensure "State" is also mapped to its numeric ID if present
+    # This ID was found via debugging network logs (Step 299)
+    if "State" in additional_info:
+        additional_info["407473000000047017"] = additional_info["State"]
+        
     post_data = {
         "service_id": service_id,
         "staff_id": staff_id,
         "from_time": from_time,
-        "customer_details": json.dumps(customer_info)
+        "customer_details": json.dumps(customer_info),
+        # CRITICAL FIX: Send custom fields as TOP-LEVEL parameters separate from customer_details
+        # This matches the behavior that finally worked in test_booking.py
+        "additional_fields": json.dumps(additional_info),
+        "custom_fields": json.dumps(additional_info)
     }
     
     print(f"DEBUG: Attempting Zoho Booking...")
