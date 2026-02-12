@@ -1,1 +1,38 @@
 
+{
+    "date": "2026-02-12",
+    "time": "14:00",
+    "name": "Test User",
+    "email": "user@test.local",
+    "phone": "+919876543210",
+    "service_id": "407473000000041056",
+    "staff_id": "407473000000041016"
+}
+{                                                                                                                      
+    "date": "2026-02-16",                                                                                                
+    "time": "10:00 AM",                                                                                                  
+    "name": "Rahul Kumar",
+    "email": "rkjhajharia08@gmail.com",                                                                                  
+    "phone": "9530251797",                                                                                               
+    "service_id": "407473000000047002",
+    "staff_id": "407473000000041016"
+}
+{                                                                       
+      "date": "2026-02-13",                                                     
+      "time": "14:00",
+      "name": "Test User",
+      "email": "user@test.local",
+      "phone": "9876543210",
+      "service_id": "407473000000047002",
+      "staff_id": "407473000000041016"
+}
+
+{
+    "date": "2026-02-13",
+    "time": "14:00",
+    "name": "Test User",
+    "email": "user@test.local",
+    "phone": "9876543210",
+    "service_id": "407473000000041056",
+    "staff_id": "407473000000041016"
+}

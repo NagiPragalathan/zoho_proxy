@@ -1,34 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoho Proxy Platform | High-End API Gateway</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.4);
             --primary-hover: #4f46e5;
-            --bg: #0f172a;
-            --glass: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
+            --bg: #0b0f1a;
+            --surface: #161b2a;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
             --text: #f8fafc;
+            --text-muted: #94a3b8;
             --accent: #818cf8;
             --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: all 0.2s ease;
         }
 
         body {
-            font-family: 'Outfit', sans-serif;
-            background: radial-gradient(circle at top left, #1e293b, #0f172a);
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 0% 0%, #1e293b 0%, #0b0f1a 50%);
+            background-color: var(--bg);
             color: var(--text);
             min-height: 100vh;
             margin: 0;
             padding: 40px 20px;
             display: flex;
             justify-content: center;
+            overflow-x: hidden;
         }
 
         .container {
             width: 100%;
-            max-width: 1000px;
-            animation: fadeIn 0.8s ease-out;
+            max-width: 1100px;
+            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
@@ -36,14 +57,16 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
         }
 
         h1 {
-            font-size: 2.8rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
             font-weight: 800;
             margin: 0;
-            background: linear-gradient(to right, #818cf8, #c084fc);
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #fff 0%, #818cf8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -51,111 +74,158 @@
         /* Tabs */
         .tabs {
             display: flex;
-            gap: 12px;
-            margin-bottom: 30px;
+            gap: 8px;
+            margin-bottom: 32px;
             background: var(--glass);
             padding: 6px;
-            border-radius: 16px;
+            border-radius: 14px;
             border: 1px solid var(--glass-border);
             width: fit-content;
+            backdrop-filter: blur(10px);
         }
 
         .tab-btn {
             padding: 10px 24px;
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: all 0.3s ease;
             font-weight: 600;
+            font-size: 0.9rem;
             border: none;
             background: transparent;
-            color: #94a3b8;
+            color: var(--text-muted);
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .tab-btn:hover {
+            color: var(--text);
+            background: rgba(255,255,255,0.05);
         }
 
         .tab-btn.active {
             background: var(--primary);
             color: white;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 15px var(--primary-glow);
         }
 
         .section {
             display: none;
             background: var(--glass);
-            backdrop-filter: blur(16px);
+            backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
             border-radius: 24px;
             padding: 40px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
         }
 
         .section.active {
             display: block;
-            animation: slideUp 0.4s ease-out;
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         /* Account Cards */
+        .card-list {
+            display: grid;
+            gap: 20px;
+        }
+
         .account-card {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 20px;
+            border-radius: 20px;
+            padding: 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .account-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0) 0%, rgba(99, 102, 241, 0.05) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .account-card:hover::after {
+            opacity: 1;
         }
 
         .account-card.primary {
-            border-color: var(--primary);
-            background: rgba(99, 102, 241, 0.05);
-            position: relative;
+            border-color: rgba(99, 102, 241, 0.4);
+            background: rgba(99, 102, 241, 0.04);
         }
 
-        .account-card.primary::before {
-            content: 'GLOBAL PRIMARY';
+        .badge-primary {
             position: absolute;
-            top: -10px;
-            right: 20px;
+            top: 0; right: 0;
             background: var(--primary);
             color: white;
-            padding: 2px 12px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: 800;
+            padding: 4px 16px;
+            border-radius: 0 0 0 16px;
+            font-size: 0.65rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .account-info h3 {
+            margin: 0 0 8px 0;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .account-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
         }
 
         /* Buttons */
         .btn {
             display: inline-flex;
             align-items: center;
+            gap: 8px;
             padding: 12px 24px;
             border-radius: 12px;
             font-weight: 600;
+            font-size: 0.9rem;
             text-decoration: none;
-            transition: all 0.3s ease;
             cursor: pointer;
             border: 1px solid transparent;
+            font-family: 'Outfit', sans-serif;
         }
 
         .btn-primary {
             background: var(--primary);
             color: white;
+            box-shadow: 0 4px 12px var(--primary-glow);
         }
 
         .btn-primary:hover {
+            background: var(--primary-hover);
             transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 8px 20px var(--primary-glow);
         }
 
         .btn-secondary {
             background: rgba(255, 255, 255, 0.05);
-            color: #f8fafc;
+            color: white;
             border-color: var(--glass-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .btn-danger {
@@ -164,139 +234,283 @@
             border-color: rgba(239, 68, 68, 0.2);
         }
 
+        .btn-danger:hover {
+            background: var(--danger);
+            color: white;
+        }
+
         /* Form Controls */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
         label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             font-weight: 600;
-            color: #94a3b8;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         input, textarea, select {
             width: 100%;
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.25);
             border: 1px solid var(--glass-border);
             border-radius: 12px;
-            padding: 12px;
+            padding: 14px 16px;
             color: white;
             font-family: inherit;
-            margin-bottom: 20px;
-            box-sizing: border-box;
+            font-size: 0.95rem;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
         }
 
         textarea {
-            height: 150px;
-            font-family: 'Courier New', monospace;
+            height: 250px;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
             font-size: 0.9rem;
+            line-height: 1.6;
+            resize: vertical;
         }
 
-        /* Documentation styles */
-        .doc-endpoint {
-            margin-bottom: 40px;
-            padding-bottom: 30px;
-            border-bottom: 1px solid var(--glass-border);
+        /* Tester Grid */
+        .tester-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 40px;
         }
 
-        .method {
-            background: #10b981;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-weight: 800;
-            font-size: 0.8rem;
-            margin-right: 10px;
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
-        code {
-            background: rgba(0,0,0,0.3);
-            color: var(--accent);
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-family: monospace;
+        .response-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
-        pre {
-            background: #000;
-            padding: 20px;
-            border-radius: 16px;
-            overflow-x: auto;
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+            padding: 8px 16px;
+            border-radius: 10px 10px 0 0;
             border: 1px solid var(--glass-border);
-            margin: 15px 0;
+            border-bottom: none;
         }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
+        .code-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .mock-editor {
+            border-radius: 0 0 12px 12px !important;
+        }
+
+        #test-output {
+            margin: 0;
+            padding: 20px;
+            background: #05070a;
+            border: 1px solid var(--glass-border);
+            border-radius: 0 0 16px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #d1d5db;
+            height: 480px;
+            overflow: auto;
             position: relative;
         }
 
-        .status-dot.active { background: #10b981; box-shadow: 0 0 10px #10b981; }
-        .status-dot.active::after {
-            content: '';
-            position: absolute;
-            width: 100%; height: 100%;
-            background: inherit; border-radius: inherit;
+        /* Docs Styles */
+        .doc-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            margin-right: 12px;
+        }
+
+        .method-post { background: #10b981; color: white; }
+        .method-get { background: #3b82f6; color: white; }
+
+        pre {
+            background: #05070a;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            font-size: 0.85rem;
+        }
+
+        /* Loaders & Status */
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .status-active {
+            background: var(--success);
+            box-shadow: 0 0 12px var(--success);
             animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.8; }
-            100% { transform: scale(3); opacity: 0; }
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
         }
 
-        #test-result {
-            margin-top: 20px;
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0 0 16px 16px;
+            z-index: 10;
+            backdrop-filter: blur(4px);
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(99, 102, 241, 0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Modal Customization */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(12px);
             display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--glass-border);
+            width: 100%;
+            max-width: 550px;
+            border-radius: 28px;
+            padding: 40px;
+            position: relative;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.2);
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Zoho Proxy Platform</h1>
-            <a href="{% url 'zoho_login' %}" class="btn btn-primary">+ Add Account</a>
+            <h1>Zoho Gateway Proxy</h1>
+            <div style="display: flex; gap: 12px;">
+                <a href="{% url 'zoho_login' %}" class="btn btn-primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Add Connection
+                </a>
+            </div>
         </header>
 
-        <div class="tabs">
-            <button class="tab-btn active" onclick="showSection('accounts', this)">Accounts</button>
-            <button class="tab-btn" onclick="showSection('docs', this)">Developer Docs</button>
-            <button class="tab-btn" onclick="showSection('tester', this)">API Tester</button>
-        </div>
+        <nav class="tabs">
+            <button class="tab-btn active" onclick="showSection('accounts', this)">Connections</button>
+            <button class="tab-btn" onclick="showSection('docs', this)">Schema Docs</button>
+            <button class="tab-btn" onclick="showSection('tester', this)">API Playground</button>
+        </nav>
 
-        <!-- Accounts Section -->
+        <!-- Connections Section -->
         <section id="accounts" class="section active">
             <div class="card-list">
                 {% for account in accounts %}
                 <div class="account-card {% if account.is_primary %}primary{% endif %}">
-                    <div>
-                        <div style="font-weight: 700; font-size: 1.4rem; color: #fff; margin-bottom: 4px;">{{ account.account_name }}</div>
-                        <div style="font-size: 0.85rem; display: flex; align-items: center; gap: 8px; color: #94a3b8;">
-                            <span class="status-dot {% if account.is_primary %}active{% endif %}"></span>
-                            <span style="color: {% if account.is_primary %}#10b981{% endif %};">
-                                {% if account.is_primary %}Live Gateway{% else %}Backup Standby{% endif %}
-                            </span>
-                            <span>| ID: {{ account.pk }}</span>
-                            {% if account.tenant_id %}<span>| Tenant: {{ account.tenant_id }}</span>{% endif %}
+                    {% if account.is_primary %}<div class="badge-primary">Master Gateway</div>{% endif %}
+                    <div class="account-info">
+                        <h3>{{ account.account_name }}</h3>
+                        <div class="account-meta">
+                            <span class="status-dot {% if account.is_primary %}status-active{% endif %}"></span>
+                            <span>{{ account.api_domain|cut:"https://www." }}</span>
+                            <span>•</span>
+                            <span>ID: #{{ account.pk }}</span>
+                            {% if account.tenant_id %}
+                            <span>•</span>
+                            <span style="color: var(--accent);">T: {{ account.tenant_id }}</span>
+                            {% endif %}
                         </div>
                     </div>
-                    <div style="display: flex; gap: 12px; align-items: center;">
-                        <div style="text-align: right; margin-right: 15px;">
-                            <div style="font-size: 0.75rem; color: #64748b;">EXPIRATION</div>
-                            <div style="font-weight: 600; font-size: 0.9rem;">{{ account.expiry_time|timeuntil }}</div>
+                    <div style="display: flex; gap: 10px;">
+                        <div style="text-align: right; margin-right: 20px;">
+                            <div style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700; letter-spacing: 0.05em; margin-bottom: 2px;">TOKEN EXPIRES</div>
+                            <div style="font-weight: 700; font-size: 1rem; color: var(--accent);">{{ account.expiry_time|timeuntil }}</div>
                         </div>
-                        {% if not account.is_primary %}
-                        <a href="{% url 'set_primary' account.pk %}" class="btn btn-secondary">Set Primary</a>
-                        {% endif %}
-                        <button class="btn btn-secondary" onclick="openConfigModal('{{ account.pk }}', '{{ account.tenant_id|default:'' }}', '{{ account.bookings_service_id|default:'' }}', '{{ account.bookings_staff_id|default:'' }}')">Config</button>
-                        <a href="{% url 'delete_account' account.pk %}" class="btn btn-danger" onclick="return confirm('Disconnect this account?')">Disconnect</a>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary" style="padding: 10px;" onclick="openConfigModal('{{ account.pk }}', '{{ account.tenant_id|default:'' }}', '{{ account.bookings_service_id|default:'' }}', '{{ account.bookings_staff_id|default:'' }}', '{{ account.timezone|default:'Asia/Kolkata' }}')" title="Configuration">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            </button>
+                            {% if not account.is_primary %}
+                            <a href="{% url 'set_primary' account.pk %}" class="btn btn-secondary" style="padding: 10px;" title="Make Primary">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'delete_account' account.pk %}" class="btn btn-danger" style="padding: 10px;" onclick="return confirm('Disconnect this gateway?')" title="Disconnect">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                            </a>
+                        </div>
                     </div>
                 </div>
                 {% empty %}
-                <div style="text-align: center; padding: 60px; color: #64748b;">
-                    No accounts connected. Connect your first Zoho account to start.
+                <div style="text-align: center; padding: 80px; color: var(--text-muted);">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 20px; opacity: 0.5;"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                    <p style="font-size: 1.1rem;">No gateways connected. Securely link your Zoho account to begin.</p>
                 </div>
                 {% endfor %}
             </div>
@@ -304,172 +518,165 @@
 
         <!-- Docs Section -->
         <section id="docs" class="section">
-            <div class="doc-endpoint">
-                <h2><span class="method">POST</span> <code>/api/leads/</code></h2>
-                <p>Creates a lead in the primary Zoho CRM account. Handles dynamic field creation automatically.</p>
-                
-                <h3>Payload Specification</h3>
-                <pre>{
-  "First_Name": "String (Optional)",
-  "Last_Name": "String (Required)",
-  "Email": "String (Email Format)",
-  "Company": "String (Required)",
-  "Any_Custom_Field": "Any data - auto-creates field if missing"
+            <div class="doc-card">
+                <h2><span class="method-badge method-post">POST</span> <code>/api/leads/</code></h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">Universal Lead Gateway. Implements Upsert logic based on Email/Phone and auto-creates schema fields.</p>
+                <div class="tester-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div>
+                        <label>Request Body</label>
+                        <pre>{
+  "tenant_id": "targeted_account",
+  "First_Name": "Jane",
+  "Last_Name": "Doe",
+  "Email": "jane@example.com",
+  "Phone": "9876543210",
+  "Any_Dynamic_Field": "Auto-syncs to CRM"
 }</pre>
-                
-                <h3>Response Structure</h3>
-                <pre>{
-  "lead_id": "Zoho_ID_123",
-  "account": "Linked Account Name",
-  "status": 201,
-  "response": { "original_zoho_response": "..." }
-}</pre>
-            </div>
-
-            <div class="doc-endpoint">
-                <h2><span class="method">POST</span> <code>/api/bookings/</code></h2>
-                <p>Handles appointment scheduling. If the requested slot is busy, it automatically discovers alternative slots.</p>
-                
-                <h3>Payload Specification</h3>
-                <pre>{
-  "date": "YYYY-MM-DD (e.g., 2026-02-15)",
-  "time": "HH:MM (24h format, e.g., 14:30)",
-  "name": "Customer Name",
-  "email": "Customer Email",
-  "phone": "Customer Phone",
-  "tenant_id": "Optional - targeted account selection"
-}</pre>
-
-                <h3>Response Scenarios</h3>
-                
-                <div style="margin-top: 15px;">
-                    <strong style="color: #10b981;">Scenario A: Success (Booking Confirmed)</strong>
-                    <pre>{
-  "status": "booking done",
-  "booking_id": "#SC-00144",
-  "details": {
-    "booking_id": "#SC-00144",
-    "service_name": "30 Mins Meeting",
-    "staff_name": "Prem Anand",
-    "start_time": "07-Feb-2026 14:00:00",
-    "end_time": "07-Feb-2026 14:30:00",
-    "customer_name": "Test User",
-    "customer_email": "user@test.local",
-    "time_zone": "Asia/Kolkata"
-  }
-}</pre>
-                </div>
-
-                <div style="margin-top: 15px;">
-                    <strong style="color: #fbbf24;">Scenario B: Slot Unavailable (Auto-Discovery)</strong>
-                    <p style="font-size: 0.85rem; color: #94a3b8; margin: 5px 0;">If the slot is taken, the proxy automatically scans your calendar for the next 7 days and returns all free slots.</p>
-                    <pre>{
-  "status": "slot unavailable",
-  "message": "The requested slot was taken. Here are available slots for 07-Feb-2026",
-  "date": "2026-02-07",
-  "available_slots": ["01:15 PM", "01:30 PM", "02:30 PM", "02:45 PM", "03:00 PM"]
-}</pre>
+                    </div>
+                    <div>
+                        <label>Business Logic</label>
+                        <ul style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.8;">
+                            <li><b style="color: #fff;">Scalable:</b> Use <code>tenant_id</code> to target specific clients.</li>
+                            <li><b style="color: #fff;">Smart Conflict:</b> Updates meta if Email exists.</li>
+                            <li><b style="color: #fff;">Auto-Schema:</b> Creates missing CRM fields on-the-fly.</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
-            <div class="doc-endpoint">
-                <h2><span class="method" style="background: #3b82f6;">GET / POST</span> <code>/api/leads/get/</code></h2>
-                <p>Retrieves full lead data from Zoho using the Lead ID, Email, or Phone number.</p>
-                
-                <h3>Response Structure</h3>
+            <div class="doc-card">
+                <h2><span class="method-badge method-post">POST</span> <code>/api/bookings/</code></h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">Scheduling Gateway with Auto-Discovery logic for unavailable slots.</p>
                 <pre>{
-  "status": "success",
-  "account": "Linked Account Name",
-  "data": {
-    "id": "Zoho_ID_123",
-    "First_Name": "Test",
-    "Last_Name": "Developer",
-    "Email": "dev@test.local",
-    "Lead_Source": "Proxy"
-  }
+  "date": "2026-02-15",
+  "time": "14:30",
+  "name": "Acme Corp",
+  ... (supports all mandatory fields dynamically)
 }</pre>
             </div>
         </section>
 
-        <!-- Tester Section -->
+        <!-- API Tester Section -->
         <section id="tester" class="section">
-            <div style="display: flex; gap: 40px;">
-                <div style="flex: 1;">
-                    <h2>API Playground</h2>
-                    <p style="color: #94a3b8; margin-bottom: 30px;">Choose an endpoint and send a real request to your proxy.</p>
-                    
-                    <label>Endpoint</label>
-                    <select id="test-endpoint" onchange="updateSamplePayload()">
-                        <option value="/api/leads/">Create CRM Lead (leads/)</option>
-                        <option value="/api/leads/get/">Retrieve Lead (leads/get/)</option>
-                        <option value="/api/bookings/">Create Appointment (bookings/)</option>
-                    </select>
+            <div class="tester-grid">
+                <div class="editor-container">
+                    <div style="margin-bottom: 20px;">
+                        <h2 style="margin: 0 0 10px 0; font-family: 'Outfit';">API Playground</h2>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0;">Execute real-time requests against the gateway proxy.</p>
+                    </div>
 
-                    <label>JSON Payload</label>
-                    <textarea id="test-payload"></textarea>
+                    <div class="form-group">
+                        <label>Active Endpoint</label>
+                        <select id="test-endpoint" onchange="updateSamplePayload()">
+                            <option value="/api/leads/">CRM Lead: Upsert Logic (POST)</option>
+                            <option value="/api/leads/get/">CRM Lead: Metadata Retrieval (POST/GET)</option>
+                            <option value="/api/bookings/">Bookings: Appointment Gateway (POST)</option>
+                        </select>
+                    </div>
 
-                    <button class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 20px;" onclick="runTest()">
-                        Send Request &rsaquo;
+                    <div class="form-group">
+                        <div class="code-header">
+                            <span class="code-title">Request Payload (JSON)</span>
+                            <span style="font-size: 10px; color: var(--primary); font-weight: 800;">EDITABLE</span>
+                        </div>
+                        <textarea id="test-payload" class="mock-editor" spellcheck="false"></textarea>
+                    </div>
+
+                    <button class="btn btn-primary" style="width: 100%; justify-content: center; height: 50px; font-size: 1rem;" onclick="runTest()">
+                        Run Execution Pipeline
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
                     </button>
                 </div>
-                
-                <div style="flex: 1;">
-                    <label>Server Response</label>
-                    <div id="test-loader" style="display:none; text-align: center; padding: 40px;">
-                        <div class="status-dot active"></div> Processing...
+
+                <div class="response-container">
+                    <div class="code-header" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.2);">
+                        <span class="code-title" style="color: var(--primary);">Gateway Response</span>
+                        <div id="test-status-chip" style="display:none; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; background: var(--surface);"></div>
                     </div>
-                    <pre id="test-output" style="height: 380px; margin: 0; background: #000; border-color: var(--primary);">/* Response will appear here after execution */</pre>
+                    <div style="position: relative;">
+                        <div id="test-loader" class="loading-overlay" style="display:none;">
+                            <div style="text-align: center;">
+                                <div class="spinner"></div>
+                                <p style="font-size: 0.75rem; margin-top: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.1em;">Authenticating...</p>
+                            </div>
+                        </div>
+                        <pre id="test-output">/* System ready for execution... */</pre>
+                    </div>
                 </div>
             </div>
         </section>
+    </div>
 
-    <!-- Config Modal -->
-    <div id="config-modal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
-        <div class="section" style="width: 100%; max-width: 500px; display: block;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin:0;">Account Configuration</h2>
-                <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.75rem;" onclick="fetchZohoMetadata()">
-                    🔄 Auto-Fetch from Zoho
+    <!-- Edit Modal -->
+    <div id="config-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+                <div>
+                    <h2 style="margin:0 0 4px 0; font-family: 'Outfit'; font-size: 1.8rem;">Gateway Routing</h2>
+                    <p style="margin:0; font-size: 0.9rem; color: var(--text-muted);">Configure internal identifiers and regional metadata.</p>
+                </div>
+                <button class="btn btn-secondary" style="padding: 8px 12px;" onclick="fetchZohoMetadata()" id="fetch-btn">
+                    Sync Schema
                 </button>
             </div>
             
-            <p style="color: #94a3b8; margin-bottom: 20px; font-size: 0.9rem;">Set global IDs for this account. You can enter them manually or use the fetch button to select from your Zoho account.</p>
-            
             <input type="hidden" id="config-pk">
             
-            <label>Tenant ID (Optional)</label>
-            <input type="text" id="config-tenant" placeholder="e.g. client_abc">
-            
-            <div style="display: flex; gap: 15px;">
-                <div style="flex:1;">
-                    <label>Bookings Service ID</label>
-                    <input type="text" id="config-service" placeholder="Paste ID or Fetch">
-                    <select id="select-service" style="display:none; margin-top: -10px;" onchange="document.getElementById('config-service').value=this.value"></select>
-                </div>
-                <div style="flex:1;">
-                    <label>Bookings Staff ID</label>
-                    <input type="text" id="config-staff" placeholder="Paste ID or Fetch">
-                    <select id="select-staff" style="display:none; margin-top: -10px;" onchange="document.getElementById('config-staff').value=this.value"></select>
-                </div>
-            </div>
-            
-            <div id="fetch-status" style="display:none; font-size: 0.8rem; color: #10b981; margin-bottom: 15px;">
-               ✅ Data fetched successfully! Select from dropdowns below the inputs.
+            <div class="form-group">
+                <label>Unique Tenant ID (API Target)</label>
+                <input type="text" id="config-tenant" placeholder="e.g. client_adhira">
             </div>
 
-            <div style="display: flex; gap: 12px; margin-top: 20px;">
-                <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="saveConfig()">Save Settings</button>
+            <div class="form-group">
+                <label>Regional Timezone</label>
+                <select id="config-timezone">
+                    <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                    <option value="America/New_York">America/New_York (EST)</option>
+                    <option value="Europe/London">Europe/London (GMT)</option>
+                    <option value="UTC">UTC</option>
+                </select>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label>Bookings Service</label>
+                    <input type="text" id="config-service" placeholder="System ID">
+                    <select id="select-service" style="display:none; margin-top: 8px; font-size: 0.8rem;" onchange="document.getElementById('config-service').value=this.value"></select>
+                </div>
+                <div class="form-group">
+                    <label>Assigned Staff</label>
+                    <input type="text" id="config-staff" placeholder="System ID">
+                    <select id="select-staff" style="display:none; margin-top: 8px; font-size: 0.8rem;" onchange="document.getElementById('config-staff').value=this.value"></select>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 10px;">
+                <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="saveConfig()">Apply Changes</button>
                 <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="closeConfigModal()">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
+        // Global Error Handler for easier debugging
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            alert('JS Error: ' + msg + ' at line ' + lineNo);
+            return false;
+        };
+
+        function showSection(id, btn) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+        }
+
         async function fetchZohoMetadata() {
             const pk = document.getElementById('config-pk').value;
-            const btn = event.target;
+            const btn = document.getElementById('fetch-btn');
             const originalText = btn.innerText;
-            btn.innerText = "⌛ Fetching...";
+            btn.innerText = "Syncing...";
+            btn.disabled = true;
             
             try {
                 const response = await fetch(`/account/metadata/${pk}/`);
@@ -477,42 +684,42 @@
                 
                 if (data.error) throw new Error(data.error);
 
-                // Populate Services Select
                 const sSelect = document.getElementById('select-service');
-                sSelect.innerHTML = '<option value="">-- Select Service --</option>';
-                data.services.forEach(s => {
-                    sSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
-                });
+                sSelect.innerHTML = '<option value="">-- Active Services --</option>';
+                data.services.forEach(s => sSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`);
                 sSelect.style.display = 'block';
 
-                // Populate Staff Select
                 const stSelect = document.getElementById('select-staff');
-                stSelect.innerHTML = '<option value="">-- Select Staff --</option>';
-                data.staff.forEach(s => {
-                    stSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
-                });
+                stSelect.innerHTML = '<option value="">-- Assigned Staff --</option>';
+                data.staff.forEach(s => stSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`);
                 stSelect.style.display = 'block';
-
-                document.getElementById('fetch-status').style.display = 'block';
             } catch (err) {
-                alert("Error fetching from Zoho: " + err.message);
+                alert("Gateway Error: " + err.message);
             } finally {
                 btn.innerText = originalText;
+                btn.disabled = false;
             }
         }
 
-        function openConfigModal(pk, tenant, service, staff) {
+        function openConfigModal(pk, tenant, service, staff, tz) {
+            console.log("Opening Config Modal:", {pk, tenant, service, staff, tz});
+            // alert("Opening Config for Account ID: " + pk); // Temporary for debugging
+            
+            const modal = document.getElementById('config-modal');
+            if(!modal) {
+                alert("Critical Error: Modal element not found!");
+                return;
+            }
+
             document.getElementById('config-pk').value = pk;
             document.getElementById('config-tenant').value = tenant;
             document.getElementById('config-service').value = service;
             document.getElementById('config-staff').value = staff;
+            document.getElementById('config-timezone').value = tz;
             
-            // Reset selects
             document.getElementById('select-service').style.display = 'none';
             document.getElementById('select-staff').style.display = 'none';
-            document.getElementById('fetch-status').style.display = 'none';
-            
-            document.getElementById('config-modal').style.display = 'flex';
+            modal.style.display = 'flex';
         }
 
         function closeConfigModal() {
@@ -525,6 +732,7 @@
                 tenant_id: document.getElementById('config-tenant').value,
                 bookings_service_id: document.getElementById('config-service').value,
                 bookings_staff_id: document.getElementById('config-staff').value,
+                timezone: document.getElementById('config-timezone').value,
             };
 
             const response = await fetch(`/account/update/${pk}/`, {
@@ -533,47 +741,51 @@
                 body: JSON.stringify(data)
             });
 
-            if (response.ok) {
-                location.reload();
-            } else {
-                alert("Failed to save configuration");
-            }
+            if (response.ok) location.reload();
+            else alert("Update Failed");
         }
 
-        function showSection(id, btn) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            btn.classList.add('active');
-        }
+        // --- API TESTER LOGIC ---
+        const primaryData = {
+            tenant_id: "{{ primary_account.tenant_id|default:'' }}",
+            service_id: "{{ primary_account.bookings_service_id|default:'' }}",
+            staff_id: "{{ primary_account.bookings_staff_id|default:'' }}"
+        };
 
         const payloads = {
             '/api/leads/': {
+                "tenant_id": primaryData.tenant_id,
                 "First_Name": "Test",
-                "Last_Name": "Developer",
-                "Email": "dev@test.local",
-                "Company": "Sandbox Tech",
-                "Source_App": "Proxy Explorer"
+                "Last_Name": "User",
+                "Email": "test@demo.local",
+                "Company": "XtraCut Sandbox",
+                "Lead_Source": "Proxy Platform"
             },
             '/api/leads/get/': {
-                "email": "dev@test.local",
-                "phone": "+919876543210",
-                "id": ""
+                "tenant_id": primaryData.tenant_id,
+                "email": "test@demo.local"
             },
             '/api/bookings/': {
-                "date": new Date().toISOString().split('T')[0],
-                "time": "14:00",
-                "name": "Test User",
-                "email": "user@test.local",
+                "tenant_id": primaryData.tenant_id,
+                "date": new Date(Date.now() + 172800000).toISOString().split('T')[0],
+                "time": "10:30 AM",
+                "name": "Integration Tester",
+                "email": "integrator@demo.local",
                 "phone": "+919876543210",
-                "service_id": "{{ primary_account.bookings_service_id|default:'REPLACE_WITH_YOUR_SERVICE_ID' }}",
-                "staff_id": "{{ primary_account.bookings_staff_id|default:'REPLACE_WITH_YOUR_STAFF_ID' }}"
+                "service_id": primaryData.service_id,
+                "staff_id": primaryData.staff_id
             }
         };
 
         function updateSamplePayload() {
             const endpoint = document.getElementById('test-endpoint').value;
-            document.getElementById('test-payload').value = JSON.stringify(payloads[endpoint], null, 4);
+            const payload = payloads[endpoint];
+            
+            // Clean up empty optional fields
+            const cleanPayload = {...payload};
+            if (!cleanPayload.tenant_id) delete cleanPayload.tenant_id;
+            
+            document.getElementById('test-payload').value = JSON.stringify(cleanPayload, null, 4);
         }
 
         updateSamplePayload();
@@ -583,26 +795,65 @@
             const payload = document.getElementById('test-payload').value;
             const output = document.getElementById('test-output');
             const loader = document.getElementById('test-loader');
+            const chip = document.getElementById('test-status-chip');
 
-            output.style.display = 'none';
-            loader.style.display = 'block';
+            output.style.opacity = '0.3';
+            loader.style.display = 'flex';
+            chip.style.display = 'none';
 
             try {
-                let options = {
-                    method: 'POST',
+                const response = await fetch(endpoint, {
+                    method: 'POST', 
                     headers: { 'Content-Type': 'application/json' },
                     body: payload
-                };
-
-                const response = await fetch(endpoint, options);
+                });
                 const data = await response.json();
-                output.textContent = JSON.stringify(data, null, 4);
+                
+                // Enhanced Response Rendering
+                if (data.status === 'slot unavailable' && data.available_slots) {
+                    let html = `<div style="color: var(--warning); margin-bottom: 15px; font-weight: 700;">⚠️ ${data.message}</div>`;
+                    html += `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;">`;
+                    data.available_slots.forEach(slot => {
+                        html += `<div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 8px; border-radius: 8px; text-align: center; font-size: 0.8rem; color: #fbbf24; cursor: pointer;" onclick="copyToPayload('${slot}')">${slot}</div>`;
+                    });
+                    html += `</div>`;
+                    html += `<hr style="border: none; border-top: 1px solid var(--glass-border); margin: 20px 0;">`;
+                    html += `<pre style="background: none; border: none; padding: 0; height: auto; margin: 0; color: #64748b;">${JSON.stringify(data, null, 4)}</pre>`;
+                    output.innerHTML = html;
+                } else if (data.status === 'booking done') {
+                    output.innerHTML = `
+                        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); padding: 20px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">🎉</div>
+                            <div style="color: var(--success); font-weight: 800; font-size: 1.2rem;">BOOKING CONFIRMED</div>
+                            <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 5px;">ID: ${data.booking_id}</div>
+                        </div>
+                        <pre style="background: none; border: none; padding: 0; height: auto; margin-top: 20px; color: #64748b;">${JSON.stringify(data, null, 4)}</pre>
+                    `;
+                } else {
+                    output.innerHTML = `<pre style="background: none; border: none; padding: 0; height: auto; margin: 0;">${JSON.stringify(data, null, 4)}</pre>`;
+                }
+                
+                chip.textContent = `HTTP ${response.status}`;
+                chip.style.display = 'inline-block';
+                chip.style.color = response.ok ? 'var(--success)' : 'var(--danger)';
+
             } catch (err) {
-                output.textContent = "Error: " + err.message;
+                output.innerHTML = `<pre style="color: var(--danger);">// Pipeline Break\n${err.message}</pre>`;
             } finally {
                 loader.style.display = 'none';
-                output.style.display = 'block';
+                output.style.opacity = '1';
             }
+        }
+
+        function copyToPayload(time) {
+            const textarea = document.getElementById('test-payload');
+            try {
+                const current = JSON.parse(textarea.value);
+                current.time = time;
+                textarea.value = JSON.stringify(current, null, 4);
+                textarea.style.borderColor = 'var(--success)';
+                setTimeout(() => textarea.style.borderColor = '', 1000);
+            } catch (e) {}
         }
     </script>
 </body>

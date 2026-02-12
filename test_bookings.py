@@ -3,23 +3,22 @@ import json
 from datetime import datetime, timedelta
 
 # Configuration
-API_URL = "http://localhost:8000/api/bookings/"
+API_URL = "http://127.0.0.1:8000/api/bookings/"
 
 def test_booking_logic():
     print("🚀 Starting Zoho Bookings Proxy Test...")
     
-    # Use today's date for testing
-    test_date = (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%d")
+    # Use a future date for testing
+    test_date = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d")
     
     payload = {
         "date": test_date,
         "time": "14:30",
         "name": "Integration Tester",
         "email": "tester@example.com",
-        "phone": "+919876543210"
-        # "tenant_id": "optional_id",
-        # "service_id": "...", 
-        # "staff_id": "..."
+        "phone": "+919876543210",
+        "service_id": "MOCK_SERVICE_ID", 
+        "staff_id": "MOCK_STAFF_ID"
     }
 
     try:
@@ -31,6 +30,7 @@ def test_booking_logic():
         )
         
         data = response.json()
+        print(f"DEBUG: Full Response: {json.dumps(data, indent=2)}")
         print(f"📊 Status: {data.get('status')}")
         
         if data.get('status') == 'booking done':
@@ -42,6 +42,8 @@ def test_booking_logic():
             print(f"❌ Error: {data.get('message')}")
             if 'zoho_error' in data:
                 print(f"🔍 Zoho Error: {data['zoho_error']}")
+            if not data.get('status') and not data.get('message'):
+                print(f"🔍 Raw Data: {data}")
 
     except Exception as e:
         print(f"❌ Connection Error: {e}")

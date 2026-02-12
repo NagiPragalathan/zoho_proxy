@@ -399,15 +399,33 @@ def get_available_slots(account, date_obj, service_id, staff_id):
     headers = {'Authorization': f'Zoho-oauthtoken {token}'}
     base_domain = account.api_domain
     url = f"{base_domain}/bookings/v1/json/availableslots"
+    
     params = {
         "service_id": service_id,
         "staff_id": staff_id,
-        "selected_date": format_date_for_zoho(date_obj)
+        "selected_date": format_date_for_zoho(date_obj),
+        "time_zone": account.timezone
     }
+    
+    print(f"DEBUG: Fetching slots from {url} with params {params}")
     resp = requests.get(url, headers=headers, params=params)
+    
     if resp.status_code == 200:
-        data = resp.json().get("response", {}).get("returnvalue", {})
-        return data.get("data", [])
+        data = resp.json()
+        print(f"DEBUG: Slots Raw Response: {json.dumps(data)}")
+        
+        return_value = data.get("response", {}).get("returnvalue", {})
+        
+        # Zoho sometimes uses 'reponse' (typo) or 'response' inside the returnvalue
+        status = return_value.get("response") or return_value.get("reponse")
+        
+        if status == "success":
+            slots = return_value.get("data", [])
+            print(f"DEBUG: Found {len(slots)} slots")
+            return slots
+        else:
+            print(f"DEBUG: Slot fetch status was not success: {status}")
+            
     return []
 
 @csrf_exempt
@@ -441,12 +459,50 @@ def proxy_booking(request):
     
     try:
         date_obj = datetime.strptime(date_str, "%Y-%m-%d")
-    except:
-        return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=400)
+        
+        # Parse time string - supports both "HH:MM" and "HH:MM AM/PM"
+        time_obj = None
+        for fmt in ["%H:%M", "%I:%M %p", "%I:%M%p"]:
+            try:
+                time_obj = datetime.strptime(time_str.strip(), fmt)
+                break
+            except ValueError:
+                continue
+        
+        if not time_obj:
+            return JsonResponse({'error': 'Time format not recognized. Use HH:MM or HH:MM AM/PM'}, status=400)
+
+        # Combine date and time for a full comparison
+        booking_datetime = date_obj.replace(hour=time_obj.hour, minute=time_obj.minute)
+        
+        # Standardize time_str to 24h for consistency in internal logic
+        time_str = booking_datetime.strftime("%H:%M")
+        
+        # Check if requested time is in the past
+        if booking_datetime < datetime.now():
+            return JsonResponse({
+                'error': f'Cannot book in the past. Requested: {booking_datetime.strftime("%Y-%m-%d %H:%M")}, Current: {datetime.now().strftime("%Y-%m-%d %H:%M")}'
+            }, status=400)
+    except Exception as e:
+        return JsonResponse({'error': f'Invalid date or time format: {str(e)}'}, status=400)
 
     customer_name = payload.get('name')
     customer_email = payload.get('email')
     customer_phone = payload.get('phone')
+
+    # Collect all other fields to send as custom fields to Zoho Bookings
+    # We exclude the internal fields used by the proxy itself
+    excluded_fields = {'date', 'time', 'name', 'email', 'phone', 'tenant_id', 'service_id', 'staff_id'}
+    customer_info = {
+        "name": customer_name,
+        "email": customer_email,
+        "phone_number": customer_phone
+    }
+    
+    # Add any extra fields from the payload into customer_details
+    for key, value in payload.items():
+        if key not in excluded_fields:
+            customer_info[key] = value
 
     # 1. Try to book
     token = get_valid_token(account)
@@ -461,15 +517,23 @@ def proxy_booking(request):
         "service_id": service_id,
         "staff_id": staff_id,
         "from_time": from_time,
-        "customer_details": json.dumps({
-            "name": customer_name,
-            "email": customer_email,
-            "phone_number": customer_phone
-        })
+        "customer_details": json.dumps(customer_info)
     }
     
+    print(f"DEBUG: Attempting Zoho Booking...")
+    print(f"DEBUG: URL: {booking_url}")
+    print(f"DEBUG: Data: {post_data}")
+    
     resp = requests.post(booking_url, headers=headers, data=post_data)
-    res_data = resp.json().get("response", {}).get("returnvalue", {})
+    
+    print(f"DEBUG: Zoho Response Status: {resp.status_code}")
+    print(f"DEBUG: Zoho Response Text: {resp.text}")
+
+    raw_zoho_resp = resp.text
+    try:
+        res_data = resp.json().get("response", {}).get("returnvalue", {})
+    except:
+        return JsonResponse({'error': 'Invalid response from Zoho', 'raw': raw_zoho_resp}, status=500)
     
     if res_data.get("booking_id"):
         return JsonResponse({
@@ -478,18 +542,52 @@ def proxy_booking(request):
             'details': res_data
         })
     
-    # 2. If booking failed, fetch available slots
-    print(f"DEBUG: Booking failed for {from_time}. Searching for alternative slots...")
+    # 2. If booking failed, check why
+    zoho_msg = res_data.get("message", "Unknown error")
+    print(f"DEBUG: Booking failed. Zoho message: {zoho_msg}")
+    
+    # If the error is NOT about availability/taken slots, return the error immediately
+    taken_keywords = ["taken", "available", "booked", "busy", "exists"]
+    is_taken_error = any(k in zoho_msg.lower() for k in taken_keywords)
+    
+    if not is_taken_error:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Zoho Booking failed: {zoho_msg}',
+            'details': res_data,
+            'raw_zoho_response': raw_zoho_resp
+        }, status=400)
+
+    # 3. If slot IS taken, fetch alternative available slots
+    print(f"DEBUG: Slot taken/unavailable for {from_time}. Searching for alternative slots...")
     
     current_date = date_obj
     for i in range(7): # Check up to 7 days ahead
         slots = get_available_slots(account, current_date, service_id, staff_id)
         if slots:
+            # --- SELF-CORRECTION LOGIC ---
+            # If our requested time is actually IN the available list,
+            # then the booking failed for a REASON OTHER THAN availability.
+            # We should return the original Zoho error.
+            
+            # Format time to match Zoho's list format (e.g., 02:00 PM)
+            requested_12h = booking_datetime.strftime("%I:%M %p")
+            
+            if requested_12h in slots or time_str in slots:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Zoho rejected the booking for a non-availability reason: {zoho_msg}',
+                    'details': res_data,
+                    'raw_zoho_response': raw_zoho_resp
+                }, status=400)
+            
+            # If it's truly not in the list, then it's a real availability issue
             return JsonResponse({
                 'status': 'slot unavailable',
-                'message': f'The requested slot was taken. Here are available slots for {format_date_for_zoho(current_date)}',
+                'message': f'The requested slot was reported as unavailable. Here are available slots for {format_date_for_zoho(current_date)}',
                 'date': current_date.strftime("%Y-%m-%d"),
-                'available_slots': slots
+                'available_slots': slots,
+                'zoho_debug_msg': zoho_msg
             })
         current_date += timedelta(days=1)
 

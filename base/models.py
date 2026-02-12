@@ -7,6 +7,7 @@ class ZohoAccount(models.Model):
     refresh_token = models.TextField()
     api_domain = models.CharField(max_length=255, default="https://www.zohoapis.com")
     accounts_server = models.CharField(max_length=255, default="https://accounts.zoho.com")
+    timezone = models.CharField(max_length=100, default="Asia/Kolkata")
     bookings_service_id = models.CharField(max_length=255, null=True, blank=True)
     bookings_staff_id = models.CharField(max_length=255, null=True, blank=True)
     expiry_time = models.DateTimeField()
