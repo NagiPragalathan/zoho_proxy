@@ -416,15 +416,20 @@ def get_available_slots(account, date_obj, service_id, staff_id):
         
         return_value = data.get("response", {}).get("returnvalue", {})
         
-        # Zoho sometimes uses 'reponse' (typo) or 'response' inside the returnvalue
-        status = return_value.get("response") or return_value.get("reponse")
+        # Zoho's response structure is notoriously inconsistent.
+        # We check both the top-level status and the internal 'reponse' flag.
+        outer_status = data.get("response", {}).get("status")
+        inner_status = return_value.get("response") or return_value.get("reponse")
+        slot_data = return_value.get("data")
         
-        if status == "success":
-            slots = return_value.get("data", [])
-            print(f"DEBUG: Found {len(slots)} slots")
-            return slots
+        # It's a success if outer status is success AND inner_status is either 'success' or True
+        is_success = outer_status == "success" and (inner_status == "success" or inner_status is True)
+        
+        if is_success and isinstance(slot_data, list):
+            print(f"DEBUG: Found {len(slot_data)} slots")
+            return slot_data
         else:
-            print(f"DEBUG: Slot fetch status was not success: {status}")
+            print(f"DEBUG: No valid slots in response. Inner Status: {inner_status}, Data Type: {type(slot_data)}")
             
     return []
 
@@ -569,19 +574,20 @@ def proxy_booking(request):
             # If our requested time is actually IN the available list,
             # then the booking failed for a REASON OTHER THAN availability.
             # We should return the original Zoho error.
+            # IMPORTANT: Only check this for the requested date (i == 0)
+            if i == 0:
+                r1 = booking_datetime.strftime("%I:%M %p")
+                r2 = r1.lstrip('0')
+                clean_slots = [s.strip() for s in slots]
+                if r1 in clean_slots or r2 in clean_slots or time_str in clean_slots:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': f'Zoho rejected the booking for a non-availability reason: {zoho_msg}',
+                        'details': res_data,
+                        'raw_zoho_response': raw_zoho_resp
+                    }, status=400)
             
-            # Format time to match Zoho's list format (e.g., 02:00 PM)
-            requested_12h = booking_datetime.strftime("%I:%M %p")
-            
-            if requested_12h in slots or time_str in slots:
-                return JsonResponse({
-                    'status': 'error',
-                    'message': f'Zoho rejected the booking for a non-availability reason: {zoho_msg}',
-                    'details': res_data,
-                    'raw_zoho_response': raw_zoho_resp
-                }, status=400)
-            
-            # If it's truly not in the list, then it's a real availability issue
+            # If we are here, it means it's a real availability issue (truly not in the list or a different day)
             return JsonResponse({
                 'status': 'slot unavailable',
                 'message': f'The requested slot was reported as unavailable. Here are available slots for {format_date_for_zoho(current_date)}',

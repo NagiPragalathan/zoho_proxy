@@ -26,7 +26,6 @@
 
         * {
             box-sizing: border-box;
-            transition: all 0.2s ease;
         }
 
         body {
@@ -152,6 +151,7 @@
             background: linear-gradient(135deg, rgba(99, 102, 241, 0) 0%, rgba(99, 102, 241, 0.05) 100%);
             opacity: 0;
             transition: opacity 0.3s ease;
+            pointer-events: none;
         }
 
         .account-card:hover::after {
@@ -206,6 +206,10 @@
             font-family: 'Outfit', sans-serif;
         }
 
+        .btn svg {
+            pointer-events: none;
+        }
+
         .btn-primary {
             background: var(--primary);
             color: white;
@@ -237,6 +241,10 @@
         .btn-danger:hover {
             background: var(--danger);
             color: white;
+        }
+
+        .btn {
+            user-select: none;
         }
 
         /* Form Controls */
@@ -487,22 +495,22 @@
                             {% endif %}
                         </div>
                     </div>
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display: flex; gap: 10px; position: relative; z-index: 5;">
                         <div style="text-align: right; margin-right: 20px;">
                             <div style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700; letter-spacing: 0.05em; margin-bottom: 2px;">TOKEN EXPIRES</div>
                             <div style="font-weight: 700; font-size: 1rem; color: var(--accent);">{{ account.expiry_time|timeuntil }}</div>
                         </div>
                         <div style="display: flex; gap: 8px;">
-                            <button class="btn btn-secondary" style="padding: 10px;" onclick="openConfigModal('{{ account.pk }}', '{{ account.tenant_id|default:'' }}', '{{ account.bookings_service_id|default:'' }}', '{{ account.bookings_staff_id|default:'' }}', '{{ account.timezone|default:'Asia/Kolkata' }}')" title="Configuration">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            <button class="btn btn-secondary" onclick="openConfigModal('{{ account.pk }}', '{{ account.tenant_id|default:'' }}', '{{ account.bookings_service_id|default:'' }}', '{{ account.bookings_staff_id|default:'' }}', '{{ account.timezone|default:'Asia/Kolkata' }}')">
+                                Config
                             </button>
                             {% if not account.is_primary %}
-                            <a href="{% url 'set_primary' account.pk %}" class="btn btn-secondary" style="padding: 10px;" title="Make Primary">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                            <a href="{% url 'set_primary' account.pk %}" class="btn btn-secondary">
+                                Primary
                             </a>
                             {% endif %}
-                            <a href="{% url 'delete_account' account.pk %}" class="btn btn-danger" style="padding: 10px;" onclick="return confirm('Disconnect this gateway?')" title="Disconnect">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                            <a href="{% url 'delete_account' account.pk %}" class="btn btn-danger" onclick="return confirm('Disconnect this gateway?')">
+                                Delete
                             </a>
                         </div>
                     </div>
@@ -809,47 +817,100 @@
                 });
                 const data = await response.json();
                 
-                // Enhanced Response Rendering
-                if (data.status === 'slot unavailable' && data.available_slots) {
-                    let html = `<div style="color: var(--warning); margin-bottom: 15px; font-weight: 700;">⚠️ ${data.message}</div>`;
-                    html += `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;">`;
-                    data.available_slots.forEach(slot => {
-                        html += `<div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 8px; border-radius: 8px; text-align: center; font-size: 0.8rem; color: #fbbf24; cursor: pointer;" onclick="copyToPayload('${slot}')">${slot}</div>`;
-                    });
-                    html += `</div>`;
-                    html += `<hr style="border: none; border-top: 1px solid var(--glass-border); margin: 20px 0;">`;
-                    html += `<pre style="background: none; border: none; padding: 0; height: auto; margin: 0; color: #64748b;">${JSON.stringify(data, null, 4)}</pre>`;
-                    output.innerHTML = html;
-                } else if (data.status === 'booking done') {
-                    output.innerHTML = `
-                        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); padding: 20px; border-radius: 12px; text-align: center;">
-                            <div style="font-size: 2rem; margin-bottom: 10px;">🎉</div>
-                            <div style="color: var(--success); font-weight: 800; font-size: 1.2rem;">BOOKING CONFIRMED</div>
-                            <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 5px;">ID: ${data.booking_id}</div>
+                let mainContent = '';
+                
+                if (data.status === 'booking done') {
+                    mainContent = `
+                        <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid var(--success); border-radius: 16px; padding: 24px; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                                <div style="background: var(--success); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">✓</div>
+                                <div>
+                                    <h3 style="margin: 0; color: var(--success); font-family: 'Outfit';">Booking Confirmed</h3>
+                                    <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Appointment successfully synchronized with Zoho</p>
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; font-size: 0.9rem;">
+                                <div>
+                                    <label style="font-size: 0.65rem; opacity: 0.6; margin-bottom: 4px; display: block;">BOOKING ID</label>
+                                    <code style="color: var(--accent); font-weight: 700;">${data.booking_id}</code>
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.65rem; opacity: 0.6; margin-bottom: 4px; display: block;">STAFF MEMBER</label>
+                                    <span style="font-weight: 600;">${data.details?.staff_name || 'Assigned'}</span>
+                                </div>
+                            </div>
                         </div>
-                        <pre style="background: none; border: none; padding: 0; height: auto; margin-top: 20px; color: #64748b;">${JSON.stringify(data, null, 4)}</pre>
                     `;
-                } else {
-                    output.innerHTML = `<pre style="background: none; border: none; padding: 0; height: auto; margin: 0;">${JSON.stringify(data, null, 4)}</pre>`;
+                } else if (data.status === 'slot unavailable') {
+                    mainContent = `
+                        <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid var(--warning); border-radius: 16px; padding: 24px; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                                <div style="background: var(--warning); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">!</div>
+                                <div>
+                                    <h3 style="margin: 0; color: var(--warning); font-family: 'Outfit';">Slot Unavailable</h3>
+                                    <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">The requested time is taken. Try these alternatives:</p>
+                                </div>
+                            </div>
+                            <div style="background: var(--warning); color: black; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 900; display: inline-block; margin-bottom: 15px; text-transform: uppercase;">
+                                Available on ${data.date}
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 8px;">
+                                ${data.available_slots.map(slot => `
+                                    <div class="slot-chip" onclick="copyToPayload('${slot}', '${data.date}')" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); padding: 10px; border-radius: 10px; text-align: center; font-size: 0.8rem; color: #fbbf24; cursor: pointer; font-weight: 600;">${slot}</div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else if (data.status === 'error' || !response.ok) {
+                    mainContent = `
+                        <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid var(--danger); border-radius: 16px; padding: 24px; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                                <div style="background: var(--danger); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">×</div>
+                                <div>
+                                    <h3 style="margin: 0; color: var(--danger); font-family: 'Outfit';">Execution Error</h3>
+                                    <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">The gateway returned a failure response</p>
+                                </div>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; font-size: 0.85rem; border-left: 3px solid var(--danger);">
+                                ${data.message || 'Unknown provider error'}
+                            </div>
+                        </div>
+                    `;
                 }
+
+                // Add raw JSON viewer at bottom
+                mainContent += `
+                    <div style="margin-top: 10px;">
+                        <div style="font-size: 0.65rem; color: var(--text-muted); font-weight: 800; letter-spacing: 0.1em; padding: 0 0 10px 5px; text-transform: uppercase;">Raw Pipeline Feedback</div>
+                        <pre style="background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); padding: 15px; border-radius: 12px; height: auto; margin: 0; color: #64748b; font-size: 0.8rem;">${JSON.stringify(data, null, 4)}</pre>
+                    </div>
+                `;
+
+                output.innerHTML = mainContent;
                 
                 chip.textContent = `HTTP ${response.status}`;
                 chip.style.display = 'inline-block';
                 chip.style.color = response.ok ? 'var(--success)' : 'var(--danger)';
 
             } catch (err) {
-                output.innerHTML = `<pre style="color: var(--danger);">// Pipeline Break\n${err.message}</pre>`;
+                output.innerHTML = `
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); padding: 20px; border-radius: 12px;">
+                        <p style="color: var(--danger); font-weight: 700; margin: 0;">Fatal Interface Error</p>
+                        <p style="font-size: 0.85rem; margin: 10px 0 0 0; opacity: 0.7;">${err.message}</p>
+                    </div>
+                `;
             } finally {
                 loader.style.display = 'none';
                 output.style.opacity = '1';
             }
         }
 
-        function copyToPayload(time) {
+        function copyToPayload(time, date = null) {
             const textarea = document.getElementById('test-payload');
             try {
                 const current = JSON.parse(textarea.value);
                 current.time = time;
+                if (date) current.date = date; // Update both date and time!
                 textarea.value = JSON.stringify(current, null, 4);
                 textarea.style.borderColor = 'var(--success)';
                 setTimeout(() => textarea.style.borderColor = '', 1000);
