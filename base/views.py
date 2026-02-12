@@ -262,6 +262,127 @@ def get_bookings_metadata(request, pk):
         print(f"ERROR: Metadata fetch failed: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
 
+def get_service_fields(request, pk):
+    """Fetch mandatory fields for a specific service using a flexible deep-search."""
+    service_id = request.GET.get('service_id')
+    if not service_id:
+        return JsonResponse({'error': 'service_id required'}, status=400)
+    
+    account = get_object_or_404(ZohoAccount, pk=pk)
+    token = get_valid_token(account)
+    headers = {'Authorization': f'Zoho-oauthtoken {token}'}
+    
+    # Try both /fields and /getfields (Zoho uses both depending on the API version/domain)
+    # Also try both GET and POST as some regions are picky
+    base_domain = account.api_domain
+    
+    # NEW STEP: Try to find a Portal/Workspace Name if we don't have one
+    # This often fixes the 500 error on regional domains
+    portal_name = None
+    try:
+        portal_resp = requests.get(f"{base_domain}/bookings/v1/json/portals", headers=headers)
+        if portal_resp.status_code == 200:
+            portals = portal_resp.json().get('response', {}).get('returnvalue', {}).get('portals', [])
+            if portals:
+                portal_name = portals[0].get('portal_id') or portals[0].get('portal_name')
+                print(f"DEBUG: Found Portal Context: {portal_name}")
+    except:
+        pass
+
+    endpoints = ["/bookings/v1/json/getfields", "/bookings/v1/json/fields"]
+    params = {"service_id": service_id}
+    if portal_name:
+        params["portal_id"] = portal_name
+    
+    last_error = "Unknown"
+    data = None
+    
+    for endpoint in endpoints:
+        url = f"{base_domain}{endpoint}"
+        for method in [requests.get, requests.post]:
+            try:
+                # Try with service_id first
+                params = {"service_id": service_id}
+                # (Removed staff_id check here as it might be causing the 500 in some Zoho regions)
+                
+                resp = method(url, headers=headers, params=params if method == requests.get else None, data=params if method == requests.post else None)
+                print(f"DEBUG: Fields API Trial ({method.__name__.upper()} {endpoint}) -> Status: {resp.status_code}")
+                
+                if resp.status_code == 200:
+                    data = resp.json()
+                    print(f"DEBUG: Fields API Success on {endpoint}!")
+                    break
+                else:
+                    last_error = f"Status {resp.status_code}: {resp.text}"
+                    print(f"DEBUG: Fields API Trial Failed. Body: {resp.text[:500]}")
+                
+                # Fallback: Try without service_id
+                if resp.status_code != 200:
+                    resp = method(url, headers=headers)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        break
+            except Exception as e:
+                last_error = str(e)
+                print(f"DEBUG: Fields API Exception: {str(e)}")
+                continue
+        if data: break
+    
+    if not data:
+        print(f"CRITICAL: All Fields API attempts failed. Last error: {last_error}")
+        return JsonResponse({
+            'error': 'Failed to fetch fields from Zoho',
+            'detail': last_error,
+            'advice': 'Check your terminal console for the raw Zoho error response.'
+        }, status=200)
+
+    try:
+        # Deep search for any key matching 'fields' or containing list of fields
+        def find_fields_in_json(obj):
+            if isinstance(obj, dict):
+                for k, v in obj.items():
+                    if k in ['fields', 'custom_fields', 'booking_fields'] and isinstance(v, list):
+                        return v
+                    result = find_fields_in_json(v)
+                    if result: return result
+            elif isinstance(obj, list):
+                for item in obj:
+                    result = find_fields_in_json(item)
+                    if result: return result
+            return None
+
+        fields_list = find_fields_in_json(data) or []
+        
+        # Fallback to direct path search
+        if not fields_list:
+            # response -> returnvalue -> fields
+            fields_list = data.get('response', {}).get('returnvalue', {}).get('fields', [])
+        
+        mandatory_fields = {}
+        for f in fields_list:
+            if not isinstance(f, dict): continue
+            
+            # Zoho uses multiple keys for requirement status
+            is_req = f.get('is_mandatory') or f.get('mandatory') or f.get('required') or False
+            
+            if is_req:
+                # Field ID or Field Name
+                field_id = f.get('field_name') or f.get('id') or f.get('field_id')
+                display_name = f.get('display_name') or f.get('label') or field_id
+                
+                # Filter out base fields that we already handle in the UI
+                if field_id and field_id.lower() not in ['name', 'email', 'phone_number', 'date', 'time', 'service_id', 'staff_id']:
+                    mandatory_fields[field_id] = f"REQUIRED: {display_name}"
+
+        return JsonResponse({
+            'mandatory_fields': mandatory_fields,
+            'count': len(mandatory_fields),
+            'debug_found_fields': len(fields_list)
+        })
+    except Exception as e:
+        print(f"ERROR in get_service_fields: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
 @csrf_exempt
 def proxy_lead(request):
     if request.method != 'POST':
@@ -498,16 +619,21 @@ def proxy_booking(request):
     # Collect all other fields to send as custom fields to Zoho Bookings
     # We exclude the internal fields used by the proxy itself
     excluded_fields = {'date', 'time', 'name', 'email', 'phone', 'tenant_id', 'service_id', 'staff_id'}
+    
+    # Custom fields in Zoho Bookings JSON API usually go inside any_additional_info
+    additional_info = {}
+    for key, value in payload.items():
+        if key not in excluded_fields:
+            additional_info[key] = value
+
     customer_info = {
         "name": customer_name,
         "email": customer_email,
-        "phone_number": customer_phone
+        "phone_number": customer_phone,
     }
     
-    # Add any extra fields from the payload into customer_details
-    for key, value in payload.items():
-        if key not in excluded_fields:
-            customer_info[key] = value
+    if additional_info:
+        customer_info["any_additional_info"] = additional_info
 
     # 1. Try to book
     token = get_valid_token(account)
@@ -553,9 +679,27 @@ def proxy_booking(request):
     
     # If the error is NOT about availability/taken slots, return the error immediately
     taken_keywords = ["taken", "available", "booked", "busy", "exists"]
-    is_taken_error = any(k in zoho_msg.lower() for k in taken_keywords)
+    zoho_msg_lower = zoho_msg.lower()
+    is_taken_error = any(k in zoho_msg_lower for k in taken_keywords)
     
     if not is_taken_error:
+        # Check if it's a "Mandatory Field" error
+        import re
+        # Pattern: "Custom field [State''] fields are mandatory"
+        # Pattern: "'State' is mandatory"
+        mandatory_match = re.search(r"Custom field \[(.*?)'?"'\] fields are mandatory', zoho_msg)
+        if not mandatory_match:
+            mandatory_match = re.search(r"'(.*?)' is mandatory", zoho_msg)
+            
+        if mandatory_match:
+            field_name = mandatory_match.group(1).replace("'", "").strip()
+            return JsonResponse({
+                'status': 'missing_fields',
+                'message': f'Zoho requires a mandatory field: {field_name}',
+                'fields': {field_name: "REQUIRED"},
+                'raw_zoho_error': zoho_msg
+            }, status=400)
+
         return JsonResponse({
             'status': 'error',
             'message': f'Zoho Booking failed: {zoho_msg}',

@@ -36,3 +36,25 @@
     "service_id": "407473000000041056",
     "staff_id": "407473000000041016"
 }
+
+
+---
+{
+  "date": "2026-02-16",
+  "time": "12:15",
+  "name": "Amit Patel",
+  "email": "amit.patel@example.com",
+  "phone": "9898765432",
+  "service_id": "407473000000047002",
+  "staff_id": "407473000000041016"
+}
+---
+{
+    "date": "2026-02-14",
+    "time": "10:30 AM",
+    "name": "Integration Tester",
+    "email": "integrator@demo.local",
+    "phone": "+919876543210",
+    "service_id": "407473000000041056",
+    "staff_id": "407473000000041016"
+}

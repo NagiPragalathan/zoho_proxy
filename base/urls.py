@@ -11,5 +11,6 @@ urlpatterns = [
     path('account/primary/<int:pk>/', views.set_primary, name='set_primary'),
     path('account/update/<int:pk>/', views.update_account_config, name='update_account_config'),
     path('account/metadata/<int:pk>/', views.get_bookings_metadata, name='get_bookings_metadata'),
+    path('account/fields/<int:pk>/', views.get_service_fields, name='get_service_fields'),
     path('account/delete/<int:pk>/', views.delete_account, name='delete_account'),
 ]

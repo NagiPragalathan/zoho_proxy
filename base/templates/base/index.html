@@ -585,6 +585,7 @@
                     <div class="form-group">
                         <div class="code-header">
                             <span class="code-title">Request Payload (JSON)</span>
+                            <button id="sync-params-btn" onclick="syncServiceParams()" style="background: transparent; border: none; font-size: 10px; color: var(--primary); font-weight: 800; cursor: pointer; display: none;">SYNC SERVICE PARAMS</button>
                             <span style="font-size: 10px; color: var(--primary); font-weight: 800;">EDITABLE</span>
                         </div>
                         <textarea id="test-payload" class="mock-editor" spellcheck="false"></textarea>
@@ -755,6 +756,7 @@
 
         // --- API TESTER LOGIC ---
         const primaryData = {
+            pk: "{{ primary_account.pk|default:'' }}",
             tenant_id: "{{ primary_account.tenant_id|default:'' }}",
             service_id: "{{ primary_account.bookings_service_id|default:'' }}",
             staff_id: "{{ primary_account.bookings_staff_id|default:'' }}"
@@ -787,13 +789,50 @@
 
         function updateSamplePayload() {
             const endpoint = document.getElementById('test-endpoint').value;
-            const payload = payloads[endpoint];
+            const syncBtn = document.getElementById('sync-params-btn');
             
-            // Clean up empty optional fields
+            // Show sync button only for Bookings
+            if (endpoint === '/api/bookings/') syncBtn.style.display = 'inline-block';
+            else syncBtn.style.display = 'none';
+
+            const payload = payloads[endpoint];
             const cleanPayload = {...payload};
             if (!cleanPayload.tenant_id) delete cleanPayload.tenant_id;
             
             document.getElementById('test-payload').value = JSON.stringify(cleanPayload, null, 4);
+        }
+
+        async function syncServiceParams() {
+            const textarea = document.getElementById('test-payload');
+            const btn = document.getElementById('sync-params-btn');
+            
+            try {
+                const current = JSON.parse(textarea.value);
+                const service_id = current.service_id || primaryData.service_id;
+                const pk = primaryData.pk;
+
+                if (!service_id || !pk) {
+                    alert("Select an account with a Service ID first.");
+                    return;
+                }
+
+                btn.innerText = "SYNCING...";
+                const resp = await fetch(`/account/fields/${pk}/?service_id=${service_id}`);
+                const data = await resp.json();
+                
+                if (data.mandatory_fields) {
+                    const merged = { ...current, ...data.mandatory_fields };
+                    textarea.value = JSON.stringify(merged, null, 4);
+                    btn.innerText = "SYNCED!";
+                } else {
+                    btn.innerText = "NO EXTRAS REQ.";
+                }
+            } catch (e) {
+                alert("Schema Sync Error: " + e.message);
+                btn.innerText = "SYNC FAILED";
+            } finally {
+                setTimeout(() => btn.innerText = "SYNC SERVICE PARAMS", 2000);
+            }
         }
 
         updateSamplePayload();
@@ -861,6 +900,24 @@
                             </div>
                         </div>
                     `;
+                } else if (data.status === 'missing_fields') {
+                    mainContent = `
+                        <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid var(--danger); border-radius: 16px; padding: 24px; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                                <div style="background: var(--danger); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">!</div>
+                                <div>
+                                    <h3 style="margin: 0; color: var(--danger); font-family: 'Outfit';">Required Field Missing</h3>
+                                    <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Zoho Booking requires additional custom information:</p>
+                                </div>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 3px solid var(--danger);">
+                                <code style="color: white; font-weight: 700;">${Object.keys(data.fields)[0]}</code> is mandatory.
+                            </div>
+                            <button onclick='copyToPayload("${Object.keys(data.fields)[0]}", null, "REQUIRED_VALUE")' class="btn btn-secondary" style="width: 100%; font-size: 0.8rem; height: 40px;">
+                                Auto-Inject Field to JSON
+                            </button>
+                        </div>
+                    `;
                 } else if (data.status === 'error' || !response.ok) {
                     mainContent = `
                         <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid var(--danger); border-radius: 16px; padding: 24px; margin-bottom: 20px;">
@@ -905,12 +962,20 @@
             }
         }
 
-        function copyToPayload(time, date = null) {
+        function copyToPayload(keyOrTime, date = null, customValue = null) {
             const textarea = document.getElementById('test-payload');
             try {
                 const current = JSON.parse(textarea.value);
-                current.time = time;
-                if (date) current.date = date; // Update both date and time!
+                
+                if (customValue !== null) {
+                    // Logic for "Missing Field" injection
+                    current[keyOrTime] = customValue;
+                } else {
+                    // Logic for "Slot Click" injection
+                    current.time = keyOrTime;
+                    if (date) current.date = date;
+                }
+                
                 textarea.value = JSON.stringify(current, null, 4);
                 textarea.style.borderColor = 'var(--success)';
                 setTimeout(() => textarea.style.borderColor = '', 1000);
